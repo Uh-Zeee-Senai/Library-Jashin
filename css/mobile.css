@@ -1,0 +1,39 @@
+/* Ajustes específicos para celulares */
+@media (max-width:900px){
+  .admin-layout.sidebar-collapsed .admin-brand>div,.admin-layout.sidebar-collapsed .side-label,.admin-layout.sidebar-collapsed .side-nav span,.admin-layout.sidebar-collapsed .public-link span,.admin-layout.sidebar-collapsed .logout span{display:block!important}
+  .admin-layout.sidebar-collapsed .side-nav button,.admin-layout.sidebar-collapsed .public-link,.admin-layout.sidebar-collapsed .logout{text-align:left!important;padding:12px 13px!important}
+  .sidebar{width:min(84vw,310px)!important;height:100dvh!important;transform:translateX(-105%)!important;overflow-y:auto!important}
+  .sidebar.open{transform:translateX(0)!important}
+  .menu-btn{display:inline-grid!important;place-items:center!important;width:40px;height:40px;font-size:20px}
+  .collapse-btn{display:none!important}
+  .topbar{height:64px;padding:0 14px}
+  .dashboard{padding:14px 12px 28px}
+  .panel-title{align-items:stretch!important;flex-direction:column!important}
+  .panel-title .btn{width:100%!important;margin-top:5px}
+  .stats-grid{grid-template-columns:1fr 1fr!important;gap:10px}
+  .book-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+  .book-card-cover{height:165px!important}
+  .table-scroll{width:100%;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .book-table{min-width:720px!important}
+  .actions{display:flex!important;gap:8px!important}
+  .actions .icon-btn{display:inline-grid!important;place-items:center!important;min-width:42px!important;min-height:42px!important}
+  .book-table td:last-child,.book-table th:last-child{position:sticky;right:0;background:#fffbef;z-index:5;box-shadow:-6px 0 12px #594a2915}
+  .book-table th:last-child{background:#fff8e6}
+  .modal{padding:0!important;align-items:end!important}
+  .modal-card{width:100%!important;max-width:none!important;max-height:94dvh!important;border-radius:18px 18px 0 0!important;padding:22px 16px calc(18px + env(safe-area-inset-bottom))!important}
+  .form-grid{grid-template-columns:1fr!important}
+  .full{grid-column:auto!important}
+  .form-group input,.form-group textarea,.form-group select{font-size:16px;padding:11px}
+  .modal-actions{position:sticky;bottom:0;background:var(--paper);padding:13px 0 calc(4px + env(safe-area-inset-bottom));z-index:6}
+  .modal-actions .btn{flex:1;margin-top:0}
+}
+@media(max-width:560px){
+  .topbar h1{font-size:19px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .user-area{display:none!important}
+  .welcome{padding:20px 17px}.welcome h2{font-size:23px}.welcome p{font-size:13px;line-height:1.5}
+  .panel{padding:15px}
+  .stat-card{padding:14px}.stat-card small{font-size:10px}.stat-card strong{font-size:23px}
+  .book-card-body{padding:11px}.book-card h3{font-size:16px;line-height:1.2}.book-card p{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.status-pill{font-size:9px}
+  .book-table th,.book-table td{padding:10px 7px}.actions .icon-btn{min-width:42px!important;min-height:42px!important}
+}
+@media(max-width:360px){.stats-grid,.book-grid{grid-template-columns:1fr!important}.dashboard{padding-left:9px;padding-right:9px}.panel{padding:13px}.book-card-cover{height:190px!important}}
