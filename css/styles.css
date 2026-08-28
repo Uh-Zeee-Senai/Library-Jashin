@@ -1,1 +1,2 @@
-/* Arquivo reorganizado: estilos públicos da Library Jashin. */
+/* Estilos públicos da Library Jashin. A implementação atual permanece na raiz durante a migração para evitar regressões. */
+@import url('../styles.css');
