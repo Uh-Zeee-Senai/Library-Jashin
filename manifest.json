@@ -1,20 +1,22 @@
 {
-  "name": "Controle de Ordens de Serviço",
-  "short_name": "Ordens de Serviço",
-  "description": "Aplicativo PWA para controle de ordens de serviço",
+  "name": "Library Jashin — Biblioteca",
+  "short_name": "Library Jashin",
+  "description": "Biblioteca pública PWA para explorar livros e acompanhar leituras.",
   "id": "./",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#2c3e50",
+  "orientation": "portrait-primary",
+  "background_color": "#fff8e6",
+  "theme_color": "#1c3340",
+  "lang": "pt-BR",
+  "categories": ["books", "education"],
   "icons": [
     {
       "src": "./icon.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
