@@ -1,271 +1,76 @@
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js');
-    });
-}
-
-const LEGACY_STORAGE_KEY = 'patrimonios';
-let ordensServico = [];
-let supabaseClient = null;
-
+let livros = [];
+let filtroAtual = 'todos';
+let buscaAtual = '';
+let ordenacaoAtual = 'recent';
 let deferredPrompt = null;
 
-window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault();
-    deferredPrompt = event;
+const config = window.SUPABASE_CONFIG || {};
+const supabaseClient = window.supabase?.createClient(config.url, config.anonKey);
 
-    const installBtn = document.getElementById('installBtn');
-    if (installBtn) {
-        installBtn.hidden = false;
-    }
-});
+const statusLabel = { lendo:'📖 Lendo', lido:'✅ Lido', quero_ler:'📕 Quero ler', pausado:'⏸️ Pausado', abandonado:'❌ Abandonado' };
 
-//CARREGANDO
-document.addEventListener('DOMContentLoaded', async () => {
-    const config = window.SUPABASE_CONFIG || {};
-    if (!config.url || !config.anonKey || !window.supabase) {
-        mostrarErroDeConfiguracao();
-        return;
-    }
+function esc(value){ const d=document.createElement('div'); d.textContent=value ?? ''; return d.innerHTML; }
+function progresso(l){ return l.paginas ? Math.min(100,Math.round((Number(l.pagina_atual||0)/Number(l.paginas))*100)) : 0; }
 
-    supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; const b=document.getElementById('installBtn'); if(b)b.hidden=false; });
 
-    try {
-        await carregarOrdensServico();
-        renderizarOrdensServico();
-    } catch (error) {
-        tratarErro('Não foi possível carregar as ordens de serviço.', error);
-        return;
-    }
-
-    document.getElementById('ordemServicoForm').addEventListener('submit', adicionarOrdemServico);
-
-    const installBtn = document.getElementById('installBtn');
-    if (installBtn) {
-        installBtn.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-
-            deferredPrompt.prompt();
-            await deferredPrompt.userChoice;
-            deferredPrompt = null;
-            installBtn.hidden = true;
-        });
-    }
-});
-
-/**
- * Carrega ordens de serviço do Supabase
- */
-async function carregarOrdensServico() {
-    const { data, error } = await supabaseClient
-        .from('ordens_servico')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    ordensServico = data || [];
-    await migrarDadosLegadosSeNecessario();
+async function carregarLivros(){
+    if(!supabaseClient) throw new Error('Supabase não configurado.');
+    const {data,error}=await supabaseClient.from('livros').select('*').order('created_at',{ascending:false});
+    if(error) throw error;
+    livros=data||[];
+    renderizar();
 }
 
-async function migrarDadosLegadosSeNecessario() {
-    if (ordensServico.length > 0) return;
+function renderizar(){
+    const total=livros.length, lendo=livros.filter(l=>l.status==='lendo').length, lidos=livros.filter(l=>l.status==='lido').length, favoritos=livros.filter(l=>l.favorito).length;
+    document.getElementById('statTotal').textContent=total;
+    document.getElementById('statLendo').textContent=lendo;
+    document.getElementById('statLidos').textContent=lidos;
+    document.getElementById('statFavoritos').textContent=favoritos;
 
-    const dadosLegados = localStorage.getItem(LEGACY_STORAGE_KEY);
-    const patrimoniosLegados = dadosLegados ? JSON.parse(dadosLegados) : [];
-    if (patrimoniosLegados.length === 0) return;
-
-    const ordensLegadas = patrimoniosLegados.map(patrimonio => ({
-        numero: patrimonio.numero,
-        solicitante: 'Não informado',
-        descricao: patrimonio.descricao,
-        status: patrimonio.conferido ? 'concluida' : 'aberta'
-    }));
-
-    const { data, error } = await supabaseClient
-        .from('ordens_servico')
-        .insert(ordensLegadas)
-        .select('*');
-
-    if (error) throw error;
-    ordensServico = data || [];
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
-}
-
-
-/**
- * Renderiza a lista de ordens de serviço
- */
-function renderizarOrdensServico() {
-    const lista = document.getElementById('ordemServicoList');
-
-    if (ordensServico.length === 0) {
-        lista.innerHTML = '<p class="empty-message">Nenhuma ordem de serviço registrada.</p>';
-        return;
-    }
-
-    lista.innerHTML = ordensServico.map(ordem => `
-        <div class="ordem-servico-item">
-            <strong>${escapeHtml(ordem.numero)}</strong>
-            <span class="status status-${ordem.status}">${ordem.status === 'concluida' ? 'Concluída' : 'Aberta'}</span>
-            <p><b>Solicitante:</b> ${escapeHtml(ordem.solicitante)}</p>
-            <p>${escapeHtml(ordem.descricao)}</p>
-            <div class="ordem-servico-actions">
-                <button class="btn btn-check ${ordem.status === 'concluida' ? 'checked' : ''}" onclick="alternarStatus(${ordem.id})">
-                    ${ordem.status === 'concluida' ? 'Reabrir' : 'Concluir'}
-                </button>
-                <button class="btn btn-delete" onclick="deletarOrdemServico(${ordem.id})">Remover</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-
-/**
- * Alterna a visibilidade da seção de formulário
- */
-function toggleFormSection() {
-    const formSection = document.getElementById('formSection');
-    formSection.classList.toggle('visible');
-
-    if (formSection.classList.contains('visible')) {
-        document.getElementById('numeroOrdem').focus();
-    }
-}
-
-/**
- * Mostrar notificação temporária
- */
-function mostrarNotificacao(mensagem) {
-    const el = document.createElement('div');
-    el.textContent = mensagem;
-    el.className = 'toast';
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 2500);
-}
-
-
-/**
- * Adiciona nova ordem de serviço
- */
-async function adicionarOrdemServico(e) {
-    e.preventDefault();
-    
-    const numeroOrdem = document.getElementById('numeroOrdem').value.trim();
-    const solicitante = document.getElementById('solicitante').value.trim();
-    const descricao = document.getElementById('descricao').value.trim();
-    
-    if (!numeroOrdem || !solicitante || !descricao) {
-        alert('Por favor, preencha todos os campos');
-        return;
-    }
-    
-    // Verificar duplicatas
-    if (ordensServico.some(ordem => ordem.numero === numeroOrdem)) {
-        alert('Já existe uma ordem de serviço com este número!');
-        return;
-    }
-    
-    const novaOrdem = {
-        numero: numeroOrdem,
-        solicitante: solicitante,
-        descricao: descricao,
-        status: 'aberta'
-    };
-
-    const { data, error } = await supabaseClient
-        .from('ordens_servico')
-        .insert(novaOrdem)
-        .select('*')
-        .single();
-
-    if (error) {
-        tratarErro('Não foi possível salvar a ordem de serviço.', error);
-        return;
-    }
-
-    ordensServico.unshift(data);
-    
-    // Limpar formulário
-    document.getElementById('ordemServicoForm').reset();
-    
-    // Fechar formulário
-    toggleFormSection();
-    
-    // Renderizar
-    renderizarOrdensServico();
-    
-    
-    // Feedback visual
-    mostrarNotificacao('Ordem de serviço adicionada com sucesso!', 'success');
-}
-
-
-/**
- * Alterna o status da ordem de serviço
- */
-async function alternarStatus(id) {
-    const ordem = ordensServico.find(item => item.id === id);
-    if (ordem) {
-        const novoStatus = ordem.status === 'concluida' ? 'aberta' : 'concluida';
-        const { error } = await supabaseClient
-            .from('ordens_servico')
-            .update({ status: novoStatus })
-            .eq('id', id);
-
-        if (error) {
-            tratarErro('Não foi possível atualizar o status da ordem.', error);
-            return;
-        }
-
-        ordem.status = novoStatus;
-        renderizarOrdensServico();
-                
-        const status = ordem.status === 'concluida' ? 'concluída' : 'reaberta';
-        mostrarNotificacao('Ordem de serviço ${status}!', 'success');
-    }
-}
-
-/**
- * Deleta uma ordem de serviço
- */
-async function deletarOrdemServico(id) {
-    if (confirm('Tem certeza que deseja remover esta ordem de serviço?')) {
-        const { error } = await supabaseClient
-            .from('ordens_servico')
-            .delete()
-            .eq('id', id);
-
-        if (error) {
-            tratarErro('Não foi possível remover a ordem de serviço.', error);
-            return;
-        }
-
-        ordensServico = ordensServico.filter(ordem => ordem.id !== id);
-        renderizarOrdensServico();
-        
-        mostrarNotificacao('Ordem de serviço removida com sucesso!', 'success');
-    }
-}
-
-function mostrarErroDeConfiguracao() {
-    document.getElementById('ordemServicoList').innerHTML =
-        '<p class="empty-message">Configure o Supabase em supabase-config.js para carregar as ordens.</p>';
-    document.getElementById('ordemServicoForm').querySelectorAll('input, button').forEach(elemento => {
-        elemento.disabled = true;
+    let lista=livros.filter(l=>{
+        const texto=`${l.titulo||''} ${l.autor||''}`.toLowerCase();
+        const bateBusca=!buscaAtual || texto.includes(buscaAtual);
+        const bateFiltro=filtroAtual==='todos' || (filtroAtual==='favoritos'?!!l.favorito:l.status===filtroAtual);
+        return bateBusca && bateFiltro;
     });
+    lista.sort((a,b)=>{
+        if(ordenacaoAtual==='title') return (a.titulo||'').localeCompare(b.titulo||'','pt-BR');
+        if(ordenacaoAtual==='author') return (a.autor||'').localeCompare(b.autor||'','pt-BR');
+        if(ordenacaoAtual==='rating') return Number(b.avaliacao||0)-Number(a.avaliacao||0);
+        if(ordenacaoAtual==='progress') return progresso(b)-progresso(a);
+        return new Date(b.created_at||0)-new Date(a.created_at||0);
+    });
+
+    const count=document.getElementById('bookCount');
+    count.textContent=`${lista.length} ${lista.length===1?'livro':'livros'}`;
+    const grid=document.getElementById('bookList');
+    if(!lista.length){ grid.innerHTML='<div class="empty-public">🔎<br><br>Nenhum livro encontrado com esses filtros.</div>'; return; }
+    grid.innerHTML=lista.map(l=>{
+        const p=progresso(l);
+        const capa=l.capa_url?`<img src="${esc(l.capa_url)}" alt="Capa de ${esc(l.titulo)}" onerror="this.style.display='none'">`:'📖';
+        const rating=l.avaliacao?`<span class="rating">${'★'.repeat(Number(l.avaliacao))}${'☆'.repeat(5-Number(l.avaliacao))}</span>`:'';
+        return `<article class="book"><div class="cover">${capa}${l.favorito?'<span class="favorite">♥</span>':''}</div><h3>${esc(l.titulo)}</h3><p>${esc(l.autor)}</p><div class="meta"><span class="chip">${statusLabel[l.status]||esc(l.status)}</span>${l.genero?`<span class="chip">${esc(l.genero)}</span>`:''}</div>${rating?`<b>${rating}</b>`:''}${l.status==='lendo'&&l.paginas?`<small>Progresso · ${p}%</small><div class="progress"><span style="width:${p}%"></span></div>`:''}<button class="btn btn-secondary" type="button" onclick="abrirDetalhes(${l.id})">Ver detalhes</button></article>`;
+    }).join('');
 }
 
-function tratarErro(mensagem, error) {
-    console.error(mensagem, error);
-    mostrarNotificacao(mensagem);
+function abrirDetalhes(id){
+    const l=livros.find(x=>x.id===id); if(!l)return;
+    const p=progresso(l);
+    const capa=l.capa_url?`<img src="${esc(l.capa_url)}" alt="Capa de ${esc(l.titulo)}">`:'📖';
+    document.getElementById('detailContent').innerHTML=`<div class="detail-head"><div class="detail-cover">${capa}</div><div><span class="eyebrow">${statusLabel[l.status]||''}</span><h2>${esc(l.titulo)}</h2><strong>${esc(l.autor)}</strong>${l.genero?`<p>Gênero: ${esc(l.genero)}</p>`:''}${l.ano_publicacao?`<p>Ano: ${esc(l.ano_publicacao)}</p>`:''}${l.paginas?`<p>${esc(l.paginas)} páginas · ${p}% concluído</p>`:''}${l.avaliacao?`<p class="rating">${'★'.repeat(Number(l.avaliacao))}${'☆'.repeat(5-Number(l.avaliacao))}</p>`:''}</div></div>${l.resenha?`<div style="margin-top:20px"><span class="eyebrow">RESENHA</span><p>${esc(l.resenha)}</p></div>`:''}`;
+    const m=document.getElementById('detailModal'); m.classList.add('show'); m.setAttribute('aria-hidden','false');
 }
+window.abrirDetalhes=abrirDetalhes;
+function fecharDetalhes(){const m=document.getElementById('detailModal');m.classList.remove('show');m.setAttribute('aria-hidden','true');}
 
-
-/**
- * Escapa caracteres HTML para evitar XSS
- */
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+document.addEventListener('DOMContentLoaded',async()=>{
+    document.getElementById('searchInput')?.addEventListener('input',e=>{buscaAtual=e.target.value.trim().toLowerCase();renderizar();});
+    document.getElementById('sortSelect')?.addEventListener('change',e=>{ordenacaoAtual=e.target.value;renderizar();});
+    document.querySelectorAll('#filterTabs .tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#filterTabs .tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');filtroAtual=b.dataset.filter;renderizar();}));
+    document.getElementById('detailClose')?.addEventListener('click',fecharDetalhes);
+    document.getElementById('detailModal')?.addEventListener('click',e=>{if(e.target.id==='detailModal')fecharDetalhes();});
+    document.getElementById('installBtn')?.addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;document.getElementById('installBtn').hidden=true;});
+    try{await carregarLivros();}catch(error){console.error(error);document.getElementById('bookList').innerHTML='<div class="empty-public">⚠️<br><br>Não foi possível carregar a biblioteca.</div>';}
+});
