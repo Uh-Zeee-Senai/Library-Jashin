@@ -1,69 +1,1037 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#2c3e50">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <meta name="theme-color" content="#1c3340">
+
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="description" content="Aplicativo PWA para controle de ordens de serviço">
-    <title>Controle de Ordens de Serviço</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <meta name="description"
+        content="Library Jashin — sua biblioteca pessoal para organizar, acompanhar e descobrir seus livros.">
+
+    <title>Library Jashin — Minha Biblioteca</title>
+
     <link rel="icon" href="icon.png" type="image/png">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
+
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <div class="container">
 
-        <header class="header">
-            <h1>Controle de Ordens de Serviço</h1>
-            <button id="installBtn" class="btn install-btn" hidden>Instalar</button>
-        </header>
+    <!-- =====================================================
+         CABEÇALHO
+    ====================================================== -->
 
-        <section id="botaoNovaOrdemSection" class="section">
-            <button class="btn btn-large btn-success" onclick="toggleFormSection()">
-            ➕ Nova Ordem de Serviço
-            </button>
-        </section>
+    <header class="header">
 
-        <section id="formSection" class="section form-section">
-            <h2>Nova Ordem de Serviço</h2>
-            <form id="ordemServicoForm">
-                <div class="form-group">
-                    <label for="numeroOrdem">Número da OS</label>
-                    <input type="text" id="numeroOrdem" placeholder="Ex: OS-001" required autocomplete="off">
-                </div>
-                <div class="form-group">
-                    <label for="solicitante">Solicitante</label>
-                    <input type="text" id="solicitante" placeholder="Nome do solicitante" required autocomplete="off">
-                </div>
-                <div class="form-group">
-                    <label for="descricao">Descrição do serviço</label>
-                    <input type="text" id="descricao" placeholder="Descreva o serviço solicitado..." required autocomplete="off">
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                    <button type="button" class="btn btn-secondary" onclick="toggleFormSection()">Cancelar</button>
-                </div>
-            </form>
-        </section>
+        <div class="brand">
 
-        <section class="section list-section">
-            <h2>Ordens de Serviço</h2>
-            <div id="ordemServicoList" class="ordem-servico-list">
-                <p class="empty-message">Nenhuma ordem de serviço registrada.</p>
+            <img
+                src="icon.png"
+                alt="Logo Library Jashin"
+                class="brand-logo"
+            >
+
+            <div>
+                <h1>Library Jashin</h1>
+                <p>Minha biblioteca pessoal</p>
             </div>
+
+        </div>
+
+        <button
+            id="installBtn"
+            class="btn small install-btn"
+            hidden
+            type="button"
+        >
+            📱 Instalar
+        </button>
+
+    </header>
+
+
+    <!-- =====================================================
+         CONTEÚDO PRINCIPAL
+    ====================================================== -->
+
+    <main class="container">
+
+
+        <!-- =================================================
+             HERO / APRESENTAÇÃO
+        ================================================== -->
+
+        <section class="hero">
+
+            <span class="eyebrow">
+                BIBLIOTECA PESSOAL
+            </span>
+
+            <h2>
+                Toda grande jornada começa
+                com uma página.
+            </h2>
+
+            <p>
+                Organize seus livros, acompanhe suas leituras
+                e registre sua própria história.
+            </p>
+
         </section>
 
-    </div>
+
+        <!-- =================================================
+             ESTATÍSTICAS
+        ================================================== -->
+
+        <section class="stats" aria-label="Estatísticas da biblioteca">
+
+            <div>
+                <small>📚 Livros</small>
+                <b id="statTotal">0</b>
+            </div>
+
+            <div>
+                <small>📖 Lendo</small>
+                <b id="statLendo">0</b>
+            </div>
+
+            <div>
+                <small>✅ Lidos</small>
+                <b id="statLidos">0</b>
+            </div>
+
+            <div>
+                <small>❤️ Favoritos</small>
+                <b id="statFavoritos">0</b>
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             LIVRO ATUAL
+        ================================================== -->
+
+        <section
+            id="continueReadingSection"
+            class="panel continue-reading"
+            hidden
+        >
+
+            <div class="row">
+
+                <div>
+                    <span class="eyebrow">
+                        CONTINUE LENDO
+                    </span>
+
+                    <h2 id="continueTitle">
+                        -
+                    </h2>
+
+                    <p
+                        id="continueAuthor"
+                        class="muted"
+                    >
+                        -
+                    </p>
+                </div>
+
+                <button
+                    id="continueOpenBtn"
+                    class="btn btn-secondary"
+                    type="button"
+                >
+                    Abrir
+                </button>
+
+            </div>
+
+            <div class="reading-progress">
+
+                <div class="progress-header">
+
+                    <span>Progresso</span>
+
+                    <strong id="continueProgress">
+                        0%
+                    </strong>
+
+                </div>
+
+                <div class="progress-bar">
+
+                    <div
+                        id="continueProgressBar"
+                        class="progress-fill"
+                        style="width: 0%"
+                    ></div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CONTROLES
+        ================================================== -->
+
+        <section class="panel">
+
+            <div class="row">
+
+                <div>
+                    <span class="eyebrow">
+                        ACERVO
+                    </span>
+
+                    <h2>
+                        Minha Biblioteca
+                    </h2>
+                </div>
+
+                <button
+                    id="newBookBtn"
+                    class="btn btn-primary"
+                    type="button"
+                >
+                    ➕ Adicionar livro
+                </button>
+
+            </div>
+
+
+            <!-- Pesquisa -->
+
+            <div class="search-box">
+
+                <label
+                    for="searchInput"
+                    class="sr-only"
+                >
+                    Pesquisar livros
+                </label>
+
+                <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="🔎 Pesquisar por título ou autor..."
+                    autocomplete="off"
+                >
+
+            </div>
+
+
+            <!-- Filtros -->
+
+            <nav
+                id="filterTabs"
+                class="tabs"
+                aria-label="Filtros da biblioteca"
+            >
+
+                <button
+                    class="tab active"
+                    data-filter="todos"
+                    type="button"
+                >
+                    Todos
+                </button>
+
+                <button
+                    class="tab"
+                    data-filter="lendo"
+                    type="button"
+                >
+                    📖 Lendo
+                </button>
+
+                <button
+                    class="tab"
+                    data-filter="quero_ler"
+                    type="button"
+                >
+                    📕 Quero ler
+                </button>
+
+                <button
+                    class="tab"
+                    data-filter="lido"
+                    type="button"
+                >
+                    ✅ Lidos
+                </button>
+
+                <button
+                    class="tab"
+                    data-filter="pausado"
+                    type="button"
+                >
+                    ⏸️ Pausados
+                </button>
+
+                <button
+                    class="tab"
+                    data-filter="abandonado"
+                    type="button"
+                >
+                    ❌ Abandonados
+                </button>
+
+                <button
+                    class="tab"
+                    data-filter="favoritos"
+                    type="button"
+                >
+                    ❤️ Favoritos
+                </button>
+
+            </nav>
+
+
+            <!-- Ordenação -->
+
+            <div class="library-toolbar">
+
+                <span
+                    id="bookCount"
+                    class="muted"
+                >
+                    0 livros
+                </span>
+
+                <label class="sort-control">
+
+                    <span>Ordenar:</span>
+
+                    <select id="sortSelect">
+
+                        <option value="recent">
+                            Mais recentes
+                        </option>
+
+                        <option value="title">
+                            Título
+                        </option>
+
+                        <option value="author">
+                            Autor
+                        </option>
+
+                        <option value="rating">
+                            Melhor avaliação
+                        </option>
+
+                        <option value="progress">
+                            Maior progresso
+                        </option>
+
+                    </select>
+
+                </label>
+
+            </div>
+
+
+            <!-- Grade de livros -->
+
+            <div
+                id="bookList"
+                class="grid"
+                aria-live="polite"
+            >
+
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        📚
+                    </div>
+
+                    <h3>
+                        Sua biblioteca está vazia
+                    </h3>
+
+                    <p>
+                        Adicione seu primeiro livro
+                        para começar sua coleção.
+                    </p>
+
+                    <button
+                        class="btn btn-primary"
+                        type="button"
+                        onclick="abrirFormularioLivro()"
+                    >
+                        ➕ Adicionar primeiro livro
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             FORMULÁRIO DE LIVRO
+        ================================================== -->
+
+        <section
+            id="formSection"
+            class="panel form-section"
+            hidden
+        >
+
+            <div class="row">
+
+                <div>
+                    <span
+                        id="formEyebrow"
+                        class="eyebrow"
+                    >
+                        NOVO LIVRO
+                    </span>
+
+                    <h2 id="formTitle">
+                        Adicionar livro
+                    </h2>
+                </div>
+
+                <button
+                    id="closeFormBtn"
+                    class="text-btn"
+                    type="button"
+                >
+                    ✕ Fechar
+                </button>
+
+            </div>
+
+
+            <form id="bookForm">
+
+                <!-- ID oculto para edição -->
+
+                <input
+                    type="hidden"
+                    id="bookId"
+                >
+
+
+                <!-- =========================================
+                     INFORMAÇÕES BÁSICAS
+                ========================================== -->
+
+                <div class="form-section-title">
+                    <span>📚</span>
+                    <div>
+                        <strong>Informações do livro</strong>
+                        <small>
+                            Dados principais da obra
+                        </small>
+                    </div>
+                </div>
+
+
+                <div class="two">
+
+                    <div class="form-group">
+
+                        <label for="titulo">
+                            Título *
+                        </label>
+
+                        <input
+                            type="text"
+                            id="titulo"
+                            placeholder="Ex: O Cortiço"
+                            required
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="autor">
+                            Autor *
+                        </label>
+
+                        <input
+                            type="text"
+                            id="autor"
+                            placeholder="Ex: Aluísio Azevedo"
+                            required
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="two">
+
+                    <div class="form-group">
+
+                        <label for="genero">
+                            Gênero
+                        </label>
+
+                        <select id="genero">
+
+                            <option value="">
+                                Selecione um gênero
+                            </option>
+
+                            <option value="Literatura Brasileira">
+                                Literatura Brasileira
+                            </option>
+
+                            <option value="Literatura Estrangeira">
+                                Literatura Estrangeira
+                            </option>
+
+                            <option value="Romance">
+                                Romance
+                            </option>
+
+                            <option value="Fantasia">
+                                Fantasia
+                            </option>
+
+                            <option value="Ficção Científica">
+                                Ficção Científica
+                            </option>
+
+                            <option value="Mistério">
+                                Mistério
+                            </option>
+
+                            <option value="Terror">
+                                Terror
+                            </option>
+
+                            <option value="Poesia">
+                                Poesia
+                            </option>
+
+                            <option value="História">
+                                História
+                            </option>
+
+                            <option value="Filosofia">
+                                Filosofia
+                            </option>
+
+                            <option value="Ciência">
+                                Ciência
+                            </option>
+
+                            <option value="Tecnologia">
+                                Tecnologia
+                            </option>
+
+                            <option value="Biografia">
+                                Biografia
+                            </option>
+
+                            <option value="Outro">
+                                Outro
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="anoPublicacao">
+                            Ano de publicação
+                        </label>
+
+                        <input
+                            type="number"
+                            id="anoPublicacao"
+                            min="1000"
+                            max="2100"
+                            placeholder="Ex: 1890"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="capaUrl">
+                        URL da capa
+                    </label>
+
+                    <input
+                        type="url"
+                        id="capaUrl"
+                        placeholder="https://..."
+                        autocomplete="off"
+                    >
+
+                    <small>
+                        Cole o endereço de uma imagem da capa.
+                    </small>
+
+                </div>
+
+
+                <!-- =========================================
+                     LEITURA
+                ========================================== -->
+
+                <div class="form-section-title">
+
+                    <span>📖</span>
+
+                    <div>
+
+                        <strong>
+                            Informações de leitura
+                        </strong>
+
+                        <small>
+                            Acompanhe seu progresso
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="two">
+
+                    <div class="form-group">
+
+                        <label for="paginas">
+                            Número de páginas
+                        </label>
+
+                        <input
+                            type="number"
+                            id="paginas"
+                            min="1"
+                            placeholder="Ex: 240"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="paginaAtual">
+                            Página atual
+                        </label>
+
+                        <input
+                            type="number"
+                            id="paginaAtual"
+                            min="0"
+                            value="0"
+                            placeholder="Ex: 80"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="status">
+                        Status da leitura
+                    </label>
+
+                    <select id="status">
+
+                        <option value="quero_ler">
+                            📕 Quero ler
+                        </option>
+
+                        <option value="lendo">
+                            📖 Lendo
+                        </option>
+
+                        <option value="lido">
+                            ✅ Lido
+                        </option>
+
+                        <option value="pausado">
+                            ⏸️ Pausado
+                        </option>
+
+                        <option value="abandonado">
+                            ❌ Abandonei
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- =========================================
+                     AVALIAÇÃO
+                ========================================== -->
+
+                <div class="form-section-title">
+
+                    <span>⭐</span>
+
+                    <div>
+
+                        <strong>
+                            Minha avaliação
+                        </strong>
+
+                        <small>
+                            Sua opinião sobre o livro
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Nota
+                    </label>
+
+                    <div
+                        id="ratingInput"
+                        class="rating-input"
+                    >
+
+                        <button
+                            type="button"
+                            data-rating="1"
+                            aria-label="1 estrela"
+                        >
+                            ★
+                        </button>
+
+                        <button
+                            type="button"
+                            data-rating="2"
+                            aria-label="2 estrelas"
+                        >
+                            ★
+                        </button>
+
+                        <button
+                            type="button"
+                            data-rating="3"
+                            aria-label="3 estrelas"
+                        >
+                            ★
+                        </button>
+
+                        <button
+                            type="button"
+                            data-rating="4"
+                            aria-label="4 estrelas"
+                        >
+                            ★
+                        </button>
+
+                        <button
+                            type="button"
+                            data-rating="5"
+                            aria-label="5 estrelas"
+                        >
+                            ★
+                        </button>
+
+                    </div>
+
+                    <input
+                        type="hidden"
+                        id="avaliacao"
+                        value=""
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="resenha">
+                        Minha resenha
+                    </label>
+
+                    <textarea
+                        id="resenha"
+                        placeholder="O que você achou desse livro?"
+                    ></textarea>
+
+                </div>
+
+
+                <!-- =========================================
+                     ORGANIZAÇÃO
+                ========================================== -->
+
+                <div class="form-section-title">
+
+                    <span>❤️</span>
+
+                    <div>
+
+                        <strong>
+                            Organização
+                        </strong>
+
+                        <small>
+                            Personalize sua biblioteca
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <label class="checkbox-label">
+
+                    <input
+                        type="checkbox"
+                        id="favorito"
+                    >
+
+                    <span>
+                        ❤️ Adicionar aos favoritos
+                    </span>
+
+                </label>
+
+
+                <!-- =========================================
+                     AÇÕES
+                ========================================== -->
+
+                <div class="form-actions">
+
+                    <button
+                        type="submit"
+                        id="saveBookBtn"
+                        class="btn btn-primary"
+                    >
+                        💾 Salvar livro
+                    </button>
+
+                    <button
+                        type="button"
+                        id="cancelFormBtn"
+                        class="btn btn-secondary"
+                    >
+                        Cancelar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+
+        <!-- =================================================
+             DETALHES DO LIVRO
+        ================================================== -->
+
+        <section
+            id="detailsSection"
+            class="panel details-section"
+            hidden
+        >
+
+            <button
+                id="backFromDetailsBtn"
+                class="text-btn"
+                type="button"
+            >
+                ← Voltar para biblioteca
+            </button>
+
+            <div id="bookDetails">
+
+                <!-- Conteúdo preenchido pelo JavaScript -->
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             ESTATÍSTICAS
+        ================================================== -->
+
+        <section
+            id="statisticsSection"
+            class="panel statistics-section"
+        >
+
+            <div class="row">
+
+                <div>
+
+                    <span class="eyebrow">
+                        VISÃO GERAL
+                    </span>
+
+                    <h2>
+                        Estatísticas da biblioteca
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="statistics-grid">
+
+                <div class="stat-card">
+
+                    <span>📚</span>
+
+                    <div>
+
+                        <small>
+                            Total de livros
+                        </small>
+
+                        <strong id="detailTotal">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>📄</span>
+
+                    <div>
+
+                        <small>
+                            Páginas lidas
+                        </small>
+
+                        <strong id="detailPages">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>⭐</span>
+
+                    <div>
+
+                        <small>
+                            Avaliação média
+                        </small>
+
+                        <strong id="detailRating">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>❤️</span>
+
+                    <div>
+
+                        <small>
+                            Favoritos
+                        </small>
+
+                        <strong id="detailFavorites">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         RODAPÉ
+    ====================================================== -->
 
     <footer class="footer">
-        <p>Controle de Ordens de Serviço</p>
+
+        <p>
+            📚 Library Jashin
+        </p>
+
+        <small>
+            Sua biblioteca. Sua história.
+        </small>
+
     </footer>
 
+
+    <!-- =====================================================
+         TOAST
+    ====================================================== -->
+
+    <div
+        id="toast"
+        class="toast"
+        role="status"
+        aria-live="polite"
+        hidden
+    ></div>
+
+
+    <!-- =====================================================
+         SUPABASE
+    ====================================================== -->
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script src="supabase-config.js"></script>
+
     <script src="app.js"></script>
+
 </body>
+
 </html>
