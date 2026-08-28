@@ -1,630 +1,163 @@
-/* ============================================================
-   LIBRARY JASHIN
-   AUTENTICAÇÃO
-   ============================================================ */
+const config = window.SUPABASE_CONFIG || {};
+const supabaseClient = window.supabase?.createClient(config.url, config.anonKey);
 
-
-// ============================================================
-// CONFIGURAÇÃO
-// ============================================================
-
-const supabaseClient = window.supabase.createClient(
-    window.SUPABASE_CONFIG.url,
-    window.SUPABASE_CONFIG.anonKey
-);
-
-
-// ============================================================
-// ELEMENTOS
-// ============================================================
-
-const loginForm = document.getElementById("loginForm");
-const loginBtn = document.getElementById("loginBtn");
-const loginMessage = document.getElementById("loginMessage");
-
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-
-const togglePasswordBtn = document.getElementById("togglePassword");
-
-const forgotPasswordBtn =
-    document.getElementById("forgotPasswordBtn");
-
-const recoveryModal =
-    document.getElementById("recoveryModal");
-
-const recoveryForm =
-    document.getElementById("recoveryForm");
-
-const recoveryEmail =
-    document.getElementById("recoveryEmail");
-
-const recoveryBtn =
-    document.getElementById("recoveryBtn");
-
-const recoveryMessage =
-    document.getElementById("recoveryMessage");
-
-const closeRecoveryBtn =
-    document.getElementById("closeRecoveryBtn");
-
-
-// ============================================================
-// MENSAGENS
-// ============================================================
-
-function showLoginMessage(message, type = "error") {
-
-    if (!loginMessage) {
-        return;
-    }
-
-    loginMessage.textContent = message;
-
-    loginMessage.className =
-        `login-message show ${type}`;
+function showMessage(element, message, type = 'error') {
+    if (!element) return;
+    element.textContent = message;
+    element.className = `login-message show ${type}`;
 }
-
-
-function showRecoveryMessage(message, type = "error") {
-
-    if (!recoveryMessage) {
-        return;
-    }
-
-    recoveryMessage.textContent = message;
-
-    recoveryMessage.className =
-        `login-message show ${type}`;
-}
-
-
-function clearRecoveryMessage() {
-
-    if (!recoveryMessage) {
-        return;
-    }
-
-    recoveryMessage.textContent = "";
-
-    recoveryMessage.className =
-        "login-message";
-
-}
-
-
-// ============================================================
-// TRADUÇÃO DE ERROS DO SUPABASE
-// ============================================================
 
 function translateAuthError(error) {
-
-    if (!error) {
-        return "Ocorreu um erro inesperado.";
-    }
-
-    const message =
-        (error.message || "").toLowerCase();
-
-
-    if (
-        message.includes("invalid login credentials")
-        ||
-        message.includes("invalid credentials")
-    ) {
-        return "E-mail ou senha incorretos.";
-    }
-
-
-    if (message.includes("email not confirmed")) {
-
-        return (
-            "Este e-mail ainda não foi confirmado. " +
-            "Verifique sua caixa de entrada."
-        );
-
-    }
-
-
-    if (message.includes("too many requests")) {
-
-        return (
-            "Muitas tentativas. " +
-            "Aguarde alguns minutos e tente novamente."
-        );
-
-    }
-
-
-    if (message.includes("network")) {
-
-        return (
-            "Não foi possível conectar ao servidor. " +
-            "Verifique sua internet."
-        );
-
-    }
-
-
-    return error.message ||
-        "Não foi possível realizar a operação.";
+    const message = (error?.message || '').toLowerCase();
+    if (message.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
+    if (message.includes('email not confirmed')) return 'Confirme seu e-mail antes de entrar.';
+    if (message.includes('too many requests')) return 'Muitas tentativas. Aguarde alguns minutos.';
+    return error?.message || 'Não foi possível realizar a operação.';
 }
 
-
-// ============================================================
-// VERIFICAR SE USUÁRIO É ADMINISTRADOR
-// ============================================================
-
 async function isAdmin(userId) {
-
-    if (!userId) {
-        return false;
-    }
-
-    const {
-        data,
-        error
-    } = await supabaseClient
-        .from("admin_users")
-        .select("user_id")
-        .eq("user_id", userId)
+    if (!userId || !supabaseClient) return false;
+    const { data, error } = await supabaseClient
+        .from('admin_users')
+        .select('user_id')
+        .eq('user_id', userId)
         .maybeSingle();
-
-
     if (error) {
-
-        console.error(
-            "Erro ao verificar administrador:",
-            error
-        );
-
+        console.error('Erro ao verificar administrador:', error);
         return false;
-
     }
-
-
     return !!data;
 }
 
-
-// ============================================================
-// VERIFICAR SESSÃO
-// ============================================================
-
-async function checkExistingSession() {
-
-    const {
-        data,
-        error
-    } = await supabaseClient.auth.getSession();
-
-
-    if (error) {
-
-        console.error(
-            "Erro ao verificar sessão:",
-            error
-        );
-
-        return;
-
+async function ensureAdminSession() {
+    if (!supabaseClient) return null;
+    const { data } = await supabaseClient.auth.getSession();
+    const session = data?.session;
+    if (!session) return null;
+    if (!(await isAdmin(session.user.id))) {
+        await supabaseClient.auth.signOut();
+        return null;
     }
-
-
-    const session = data.session;
-
-
-    if (!session) {
-        return;
-    }
-
-
-    const user = session.user;
-
-
-    const admin = await isAdmin(user.id);
-
-
-    if (admin) {
-
-        window.location.href =
-            "admin.html";
-
-        return;
-
-    }
-
-
-    // Usuário autenticado mas não administrador.
-    await supabaseClient.auth.signOut();
-
-    showLoginMessage(
-        "Esta conta não possui acesso administrativo."
-    );
+    return session;
 }
 
+async function requireAdmin() {
+    const session = await ensureAdminSession();
+    if (!session) {
+        window.location.replace('login.html');
+        return null;
+    }
+    return session;
+}
 
-// ============================================================
-// LOGIN
-// ============================================================
+async function logoutAdmin() {
+    if (supabaseClient) await supabaseClient.auth.signOut();
+    window.location.replace('login.html');
+}
 
 async function handleLogin(event) {
-
     event.preventDefault();
-
-
-    const email =
-        emailInput.value.trim();
-
-    const password =
-        passwordInput.value;
-
+    const email = document.getElementById('email')?.value.trim();
+    const password = document.getElementById('password')?.value;
+    const btn = document.getElementById('loginBtn');
+    const message = document.getElementById('loginMessage');
 
     if (!email || !password) {
-
-        showLoginMessage(
-            "Preencha o e-mail e a senha."
-        );
-
+        showMessage(message, 'Preencha o e-mail e a senha.');
         return;
-
+    }
+    if (!supabaseClient) {
+        showMessage(message, 'Configuração do Supabase não encontrada.');
+        return;
     }
 
-
-    loginBtn.disabled = true;
-
-    loginBtn.textContent =
-        "Entrando...";
-
+    btn.disabled = true;
+    btn.textContent = 'Entrando...';
 
     try {
-
-        const {
-            data,
-            error
-        } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-
-        if (error) {
-            throw error;
-        }
-
-
-        if (!data.user) {
-
-            throw new Error(
-                "Não foi possível identificar o usuário."
-            );
-
-        }
-
-
-        const admin =
-            await isAdmin(data.user.id);
-
-
-        if (!admin) {
-
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        if (!(await isAdmin(data.user.id))) {
             await supabaseClient.auth.signOut();
-
-            throw new Error(
-                "Esta conta não possui acesso administrativo."
-            );
-
+            throw new Error('Esta conta não possui acesso administrativo.');
         }
-
-
-        showLoginMessage(
-            "Login realizado! Redirecionando...",
-            "success"
-        );
-
-
-        setTimeout(() => {
-
-            window.location.href =
-                "admin.html";
-
-        }, 500);
-
-
+        showMessage(message, 'Login realizado! Abrindo dashboard...', 'success');
+        setTimeout(() => window.location.replace('admin.html'), 500);
     } catch (error) {
-
-        console.error(
-            "Erro no login:",
-            error
-        );
-
-
-        showLoginMessage(
-            translateAuthError(error)
-        );
-
-
-        loginBtn.disabled = false;
-
-        loginBtn.textContent =
-            "🔐 Entrar";
-
+        console.error(error);
+        showMessage(message, translateAuthError(error));
+        btn.disabled = false;
+        btn.textContent = '🔐 Entrar';
     }
 }
-
-
-// ============================================================
-// MOSTRAR / ESCONDER SENHA
-// ============================================================
-
-function togglePassword() {
-
-    const isPassword =
-        passwordInput.type === "password";
-
-
-    passwordInput.type =
-        isPassword
-            ? "text"
-            : "password";
-
-
-    togglePasswordBtn.textContent =
-        isPassword
-            ? "🙈"
-            : "👁️";
-
-
-    togglePasswordBtn.setAttribute(
-        "aria-label",
-        isPassword
-            ? "Ocultar senha"
-            : "Mostrar senha"
-    );
-}
-
-
-// ============================================================
-// ABRIR RECUPERAÇÃO
-// ============================================================
-
-function openRecoveryModal() {
-
-    clearRecoveryMessage();
-
-
-    recoveryEmail.value =
-        emailInput.value.trim();
-
-
-    recoveryModal.classList.add("show");
-
-    recoveryModal.setAttribute(
-        "aria-hidden",
-        "false"
-    );
-
-
-    setTimeout(() => {
-
-        recoveryEmail.focus();
-
-    }, 100);
-
-}
-
-
-// ============================================================
-// FECHAR RECUPERAÇÃO
-// ============================================================
-
-function closeRecoveryModal() {
-
-    recoveryModal.classList.remove("show");
-
-    recoveryModal.setAttribute(
-        "aria-hidden",
-        "true"
-    );
-
-}
-
-
-// ============================================================
-// RECUPERAR SENHA
-// ============================================================
 
 async function handlePasswordRecovery(event) {
-
     event.preventDefault();
-
-
-    const email =
-        recoveryEmail.value.trim();
-
-
+    const email = document.getElementById('recoveryEmail')?.value.trim();
+    const btn = document.getElementById('recoveryBtn');
+    const message = document.getElementById('recoveryMessage');
     if (!email) {
-
-        showRecoveryMessage(
-            "Digite o e-mail da sua conta."
-        );
-
+        showMessage(message, 'Digite o e-mail da sua conta.');
         return;
-
     }
-
-
-    recoveryBtn.disabled = true;
-
-    recoveryBtn.textContent =
-        "Enviando...";
-
-
-    clearRecoveryMessage();
-
-
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
     try {
-
-        /*
-         * IMPORTANTE:
-         *
-         * O endereço abaixo deve ser uma URL
-         * válida do seu projeto publicado.
-         *
-         * Durante o desenvolvimento usamos
-         * window.location.origin.
-         */
-
-        const redirectUrl =
-            `${window.location.origin}/reset-password.html`;
-
-
-        const {
-            error
-        } = await supabaseClient.auth.resetPasswordForEmail(
-            email,
-            {
-                redirectTo: redirectUrl
-            }
-        );
-
-
-        if (error) {
-            throw error;
-        }
-
-
-        /*
-         * Não informamos se o e-mail existe ou não.
-         * Isso evita revelar quais endereços possuem
-         * contas administrativas.
-         */
-
-        showRecoveryMessage(
-            "Se este e-mail possuir uma conta, " +
-            "enviamos um link de recuperação para ele.",
-            "success"
-        );
-
-
-        recoveryBtn.textContent =
-            "📧 Link enviado";
-
-
-        setTimeout(() => {
-
-            closeRecoveryModal();
-
-            recoveryBtn.disabled = false;
-
-            recoveryBtn.textContent =
-                "📧 Enviar link";
-
-        }, 4000);
-
-
+        const redirectUrl = `${window.location.origin}${window.location.pathname.replace(/\/[^/]*$/, '')}/reset-password.html`;
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl });
+        if (error) throw error;
+        showMessage(message, 'Se este e-mail possuir uma conta, enviamos o link de recuperação para ele.', 'success');
+        setTimeout(() => closeRecoveryModal(), 3500);
     } catch (error) {
-
-        console.error(
-            "Erro na recuperação:",
-            error
-        );
-
-
-        showRecoveryMessage(
-            translateAuthError(error)
-        );
-
-
-        recoveryBtn.disabled = false;
-
-        recoveryBtn.textContent =
-            "📧 Enviar link";
-
+        console.error(error);
+        showMessage(message, translateAuthError(error));
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📧 Enviar link';
     }
-
 }
 
-
-// ============================================================
-// EVENTOS
-// ============================================================
-
-if (loginForm) {
-
-    loginForm.addEventListener(
-        "submit",
-        handleLogin
-    );
-
+function openRecoveryModal() {
+    const modal = document.getElementById('recoveryModal');
+    const recoveryEmail = document.getElementById('recoveryEmail');
+    const email = document.getElementById('email');
+    const message = document.getElementById('recoveryMessage');
+    if (!modal) return;
+    if (email && recoveryEmail) recoveryEmail.value = email.value.trim();
+    if (message) message.className = 'login-message';
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    recoveryEmail?.focus();
 }
 
-
-if (togglePasswordBtn) {
-
-    togglePasswordBtn.addEventListener(
-        "click",
-        togglePassword
-    );
-
+function closeRecoveryModal() {
+    const modal = document.getElementById('recoveryModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
 }
 
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!supabaseClient) return;
 
-if (forgotPasswordBtn) {
+    const loginForm = document.getElementById('loginForm');
+    const recoveryForm = document.getElementById('recoveryForm');
+    loginForm?.addEventListener('submit', handleLogin);
+    recoveryForm?.addEventListener('submit', handlePasswordRecovery);
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', openRecoveryModal);
+    document.getElementById('closeRecoveryBtn')?.addEventListener('click', closeRecoveryModal);
+    document.getElementById('togglePassword')?.addEventListener('click', () => {
+        const input = document.getElementById('password');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    });
 
-    forgotPasswordBtn.addEventListener(
-        "click",
-        openRecoveryModal
-    );
+    if (loginForm) {
+        const session = await ensureAdminSession();
+        if (session) window.location.replace('admin.html');
+    }
+});
 
-}
-
-
-if (closeRecoveryBtn) {
-
-    closeRecoveryBtn.addEventListener(
-        "click",
-        closeRecoveryModal
-    );
-
-}
-
-
-if (recoveryForm) {
-
-    recoveryForm.addEventListener(
-        "submit",
-        handlePasswordRecovery
-    );
-
-}
-
-
-// Fechar clicando fora do modal
-
-if (recoveryModal) {
-
-    recoveryModal.addEventListener(
-        "click",
-        event => {
-
-            if (
-                event.target ===
-                recoveryModal
-            ) {
-
-                closeRecoveryModal();
-
-            }
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// INICIALIZAÇÃO
-// ============================================================
-
-checkExistingSession();
+window.supabaseClient = supabaseClient;
+window.isAdmin = isAdmin;
+window.requireAdmin = requireAdmin;
+window.logoutAdmin = logoutAdmin;
