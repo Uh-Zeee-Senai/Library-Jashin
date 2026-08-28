@@ -44,7 +44,6 @@ function atualizarEstatisticas() {
     const favoritos = livros.filter(l => l.favorito).length;
     const quero = livros.filter(l => l.status === 'quero_ler').length;
     const pausados = livros.filter(l => l.status === 'pausado').length;
-    const abandonados = livros.filter(l => l.status === 'abandonado').length;
     const paginas = livros.reduce((sum, l) => sum + Number(l.pagina_atual || 0), 0);
     const avaliados = livros.filter(l => Number(l.avaliacao) > 0);
     const media = avaliados.length ? (avaliados.reduce((sum, l) => sum + Number(l.avaliacao), 0) / avaliados.length).toFixed(1) : '—';
@@ -194,10 +193,27 @@ function trocarView(view) {
     document.getElementById('sidebar')?.classList.remove('open');
 }
 
+function configurarSidebar() {
+    const layout = document.querySelector('.admin-layout');
+    const collapseBtn = document.getElementById('collapseBtn');
+    if (!layout || !collapseBtn) return;
+    const salvo = localStorage.getItem('libraryJashinSidebar') === 'collapsed';
+    layout.classList.toggle('sidebar-collapsed', salvo);
+    collapseBtn.setAttribute('aria-expanded', String(!salvo));
+    collapseBtn.title = salvo ? 'Expandir menu' : 'Recolher menu';
+    collapseBtn.addEventListener('click', () => {
+        const collapsed = layout.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('libraryJashinSidebar', collapsed ? 'collapsed' : 'expanded');
+        collapseBtn.setAttribute('aria-expanded', String(!collapsed));
+        collapseBtn.title = collapsed ? 'Expandir menu' : 'Recolher menu';
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const session = await window.requireAdmin();
     if (!session) return;
     setText('userEmail', session.user.email || 'Administrador');
+    configurarSidebar();
 
     document.querySelectorAll('.side-nav button').forEach(btn => btn.addEventListener('click', () => trocarView(btn.dataset.view)));
     document.getElementById('logoutBtn')?.addEventListener('click', window.logoutAdmin);
