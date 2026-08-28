@@ -1,6 +1,6 @@
 {
-  "name": "Library Jashin — Biblioteca",
-  "short_name": "Library Jashin",
+  "name": "Library Shoten — Biblioteca",
+  "short_name": "Library Shoten",
   "description": "Biblioteca pública PWA para explorar livros e acompanhar leituras.",
   "id": "./",
   "start_url": "./index.html",
