@@ -1,0 +1,20 @@
+{
+  "name": "Controle de Ordens de Serviço",
+  "short_name": "Ordens de Serviço",
+  "description": "Aplicativo PWA para controle de ordens de serviço",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#2c3e50",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
