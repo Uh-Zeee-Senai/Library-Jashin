@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#1c3340">
 <meta name="description" content="Dashboard administrativo da Library Jashin.">
 <title>Dashboard — Library Jashin</title>
-<link rel="icon" href="icon.jpg" type="image/jpeg">
+<link rel="icon" href="icon.png" type="image/png">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="admin.css">
@@ -14,42 +14,43 @@
 <body>
 <div class="admin-layout">
 <aside id="sidebar" class="sidebar">
-  <div class="admin-brand"><img src="icon.jpg" alt="Library Jashin"><div><strong>Library Jashin</strong><small>Administração</small></div></div>
+  <div class="admin-brand"><img src="icon.png" alt="Library Jashin"><div><strong>Library Jashin</strong><small>Administração</small></div></div>
+  <div class="side-label">Catálogo</div>
   <nav class="side-nav" aria-label="Administração">
-    <button class="active" data-view="dashboard">🏠 Dashboard</button>
-    <button data-view="books">📚 Biblioteca</button>
-    <button data-view="stats">📊 Estatísticas</button>
+    <button class="active" data-view="dashboard">🏠 <span>Dashboard</span></button>
+    <button data-view="books">📚 <span>Biblioteca</span></button>
+    <button data-view="stats">📊 <span>Estatísticas</span></button>
   </nav>
   <div class="sidebar-bottom">
-    <a class="public-link" href="index.html">🌐 Ver biblioteca pública</a>
-    <button id="logoutBtn" class="logout">↪ Sair</button>
+    <a class="public-link" href="index.html">🌐 <span>Ver biblioteca pública</span></a>
+    <button id="logoutBtn" class="logout">↪ <span>Sair da conta</span></button>
   </div>
 </aside>
 <main class="main-area">
-<header class="topbar"><div><button id="menuBtn" class="icon-btn menu-btn">☰</button><h1 id="viewTitle" style="display:inline-block;margin-left:8px">Dashboard</h1></div><span id="userEmail" class="user-badge"></span></header>
+<header class="topbar"><div class="topbar-left"><button id="menuBtn" class="icon-btn menu-btn" aria-label="Abrir menu">☰</button><button id="collapseBtn" class="icon-btn collapse-btn" aria-label="Recolher menu">‹</button><h1 id="viewTitle">Dashboard</h1></div><div class="user-area"><div class="user-avatar">♟</div><span id="userEmail" class="user-badge"></span></div></header>
 <div class="dashboard">
 <section id="view-dashboard" class="view active">
   <div class="welcome"><span class="eyebrow">BIBLIOTECA PESSOAL</span><h2>Bom dia, José 👋</h2><p>Gerencie sua coleção e acompanhe suas leituras.</p></div>
   <div class="stats-grid">
-    <div class="stat-card"><small>📚 Livros</small><strong id="statTotal">0</strong></div>
-    <div class="stat-card"><small>📖 Lendo</small><strong id="statLendo">0</strong></div>
-    <div class="stat-card"><small>✅ Lidos</small><strong id="statLidos">0</strong></div>
+    <div class="stat-card"><small>📚 Livros no acervo</small><strong id="statTotal">0</strong></div>
+    <div class="stat-card"><small>📖 Em leitura</small><strong id="statLendo">0</strong></div>
+    <div class="stat-card"><small>✅ Concluídos</small><strong id="statLidos">0</strong></div>
     <div class="stat-card"><small>❤️ Favoritos</small><strong id="statFavoritos">0</strong></div>
   </div>
-  <section class="panel"><div class="panel-title"><h3>Leitura em andamento</h3><button class="btn btn-primary" id="dashboardAddBtn">+ Adicionar livro</button></div><div id="readingNow" class="book-grid"></div></section>
+  <section class="panel"><div class="panel-title"><div><span class="eyebrow">CAPÍTULO ATUAL</span><h3>Leitura em andamento</h3><p class="panel-subtitle">As histórias que estão sendo lidas agora.</p></div><button class="btn btn-primary" id="dashboardAddBtn">+ Adicionar livro</button></div><div id="readingNow" class="book-grid"></div></section>
 </section>
 <section id="view-books" class="view">
-  <div class="panel"><div class="panel-title"><div><span class="eyebrow">ACERVO</span><h3>Gerenciar livros</h3></div><button class="btn btn-primary" id="addBookBtn">+ Adicionar livro</button></div><div id="bookTableWrap"></div></div>
+  <div class="panel"><div class="panel-title"><div><span class="eyebrow">ACERVO</span><h3>Gerenciar livros</h3><p class="panel-subtitle">Cadastre, edite e organize as obras da biblioteca.</p></div><button class="btn btn-primary" id="addBookBtn">+ Adicionar livro</button></div><div id="bookTableWrap"></div></div>
 </section>
 <section id="view-stats" class="view">
-  <div class="welcome"><span class="eyebrow">ANÁLISE</span><h2>Estatísticas</h2><p>Uma visão geral da sua jornada de leitura.</p></div>
+  <div class="welcome"><span class="eyebrow">ANÁLISE DO ACERVO</span><h2>Estatísticas</h2><p>Uma visão geral da sua jornada de leitura.</p></div>
   <div class="stats-grid">
-    <div class="stat-card"><small>📄 Páginas lidas</small><strong id="statPages">0</strong></div>
+    <div class="stat-card"><small>📄 Páginas percorridas</small><strong id="statPages">0</strong></div>
     <div class="stat-card"><small>📕 Quero ler</small><strong id="statWant">0</strong></div>
     <div class="stat-card"><small>⏸️ Pausados</small><strong id="statPaused">0</strong></div>
-    <div class="stat-card"><small>⭐ Média</small><strong id="statRating">—</strong></div>
+    <div class="stat-card"><small>⭐ Avaliação média</small><strong id="statRating">—</strong></div>
   </div>
-  <section class="panel"><h3 style="font-family:Georgia,serif">Distribuição por status</h3><div id="statusSummary" class="book-grid"></div></section>
+  <section class="panel"><div class="panel-title"><div><span class="eyebrow">INFOGRÁFICO</span><h3>Mapa do acervo</h3><p class="panel-subtitle">Como os livros estão distribuídos por status.</p></div></div><div id="statusSummary" class="book-grid"></div></section>
 </section>
 </div></main></div>
 <div id="bookModal" class="modal" aria-hidden="true"><div class="modal-card"><h2 id="modalTitle">Adicionar livro</h2><form id="bookForm"><input type="hidden" id="bookId"><div class="form-grid">
